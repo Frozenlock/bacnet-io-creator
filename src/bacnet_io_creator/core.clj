@@ -43,6 +43,9 @@
           type.primitive.UnsignedInteger
           util.PropertyReferences))
 
+(defn get-current-directory []
+  (. (java.io.File. ".") getAbsolutePath))
+
 (defn get-broadcast-address
   "Return the broadcast address as a string"
   []
@@ -109,7 +112,7 @@ java method `terminate'."
                               (CharacterString. io-name))
                              (PropertyValue.
                               PropertyIdentifier/description
-                              (CharacterString. io-description))])))))
+                              (CharacterString. 5 io-description))])))))
 
 
 (defn create-io-requests-from-file [file-path]
@@ -153,9 +156,10 @@ foo, :file-object foo, :port foo}"
         (listen create-b :action
                 (fn [e] (when-let [path (.getAbsolutePath @file-object)]
                           (let [devID (Integer/parseInt (text (select (to-root e) [:#devID])))]
-                            (when-let [err (send-requests-from-file path devID)]
-                              (alert err))))))
-        stop-b (listen b :action (fn [e] (let [file (choose-file)]
+                            (if-let [err (send-requests-from-file path devID)]
+                              (alert err)
+                              (alert "Done!"))))))
+        stop-b (listen b :action (fn [e] (let [file (choose-file :dir (get-current-directory))]
                                            (text! filename (.getName file))
                                            (reset! file-object file))))]
     (->

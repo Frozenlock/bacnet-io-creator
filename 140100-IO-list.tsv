@@ -1,0 +1,22 @@
+EA	1	EJ23_T_EXT	Température extérieure
+EB	2	EJ23_CHAUD_ETAT_CHAUD1	État chaudière 1
+EB	3	EJ23_CHAUD_AL_CHAUD1	Alarme chaudière 1
+EB	4	EJ23_CHAUD_ETAT_CHAUD2	État chaudière 2
+EB	5	EJ23_CHAUD_AL_CHAUD2	Alarme chaudière 2
+EA	6	EJ23_CHAUD_T_AMONT_CHAUD	Température amont chaudières
+EA	7	EJ23_CHAUD_T_AVAL_CHAUD	Température aval chaudières
+EA	8	EJ23_CHAUD_LC_010_PC_01	Lecture de courant pompe 010-PC-01
+EA	9	EJ23_CHAUD_LC_010_PC_02	Lecture de courant pompe 010-PC-02
+EB	10	EJ23_ECH1_ETAT	État ECH-1
+EB	11	EJ23_TOIL_ETAT1	État évacuation toilette 1
+EB	12	EJ23_TOIL_ETAT2	État évacuation toilette 2
+SB	1	EJ23_CHAUD_AD_CHAUD1	Arrêt / départ chaudière 1
+SA	2	EJ23_CHAUD_MOD_CHAUD1	Modulation chaudière 1
+SB	3	EJ23_CHAUD_AD_CHAUD2	Arrêt / départ chaudière 2
+SA	4	EJ23_CHAUD_MOD_CHAUD2	Modulation chaudière 2
+SB	5	EJ23_CHAUD_OUV_VOL_AN	Ouverture volet air neuf
+SB	6	EJ23_CHAUD_AD_010_PC_01	Arrêt / départ pompe 010-PC-01
+SB	7	EJ23_CHAUD_AD_010_PC_02	Arrêt / départ pompe 010-PC-02
+SB	8	EJ23_ECH1_AD	Arrêt / départ ECH-1
+SB	9	EJ23_TOIL_AD_EVAC1	Arrêt / départ évacuation toilette 1
+SB	10	EJ23_TOIL_AD_EVAC2	Arrêt / départ évacuation toilette 2
