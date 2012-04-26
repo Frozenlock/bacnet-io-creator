@@ -1,4 +1,5 @@
 (ns bacnet-io-creator.core
+  (:gen-class :main true)
   (:use [seesaw.core]
         [seesaw.mig :only (mig-panel)]
         [seesaw.chooser :only (choose-file)])
@@ -158,7 +159,7 @@ foo, :file-object foo, :port foo}"
                                            (text! filename (.getName file))
                                            (reset! file-object file))))]
     (->
-   (dialog :title "BACnet configuration"
+   (dialog :title "BACnet IO creator"
            :content
            (mig-panel
             :constraints ["wrap 2"
