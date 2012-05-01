@@ -61,11 +61,11 @@
   "Return a new configured BACnet local device . (A device is required
 to communicate over the BACnet network.). To terminate it, use the
 java method `terminate'."
-  [{:keys [device-id broadcast-address port local-address]
-    :or {device-id 1337
-         broadcast-address (get-broadcast-address)
-         port 47808
-         local-address nil}}]
+  [& {:keys [device-id broadcast-address port local-address]
+      :or {device-id 1337
+           broadcast-address (get-broadcast-address)
+           port 47808
+           local-address nil}}]
   (let [ld (LocalDevice. device-id broadcast-address local-address)]
     (-> ld (.setMaxReadMultipleReferencesNonsegmented 20))
     (.setPort ld port)
@@ -103,16 +103,22 @@ java method `terminate'."
   "Create a create-object-request to a remote BACnet device"
   [io-type io-instance io-name io-description]
   (let [type (filter-type io-type)
+        additionnal-properties
+        (when (= type ObjectType/binaryOutput)
+          (PropertyValue. PropertyIdentifier/minimumOffTime ;; set a minimum off-time
+                          (com.serotonin.bacnet4j.type.primitive.UnsignedInteger. 60)))
         oid (ObjectIdentifier. type (Integer/parseInt io-instance))]
     (CreateObjectRequest. oid
                           (SequenceOf.
                            (ArrayList.
-                            [(PropertyValue.
-                              PropertyIdentifier/objectName
-                              (CharacterString. io-name))
-                             (PropertyValue.
-                              PropertyIdentifier/description
-                              (CharacterString. 5 io-description))])))))
+                            (remove #(= nil %)
+                                    [(PropertyValue.
+                                      PropertyIdentifier/objectName
+                                      (CharacterString. io-name))
+                                     (PropertyValue.
+                                      PropertyIdentifier/description
+                                      (CharacterString. io-description))
+                                     additionnal-properties]))))))
 
 
 (defn create-io-requests-from-file [file-path]
@@ -137,7 +143,7 @@ java method `terminate'."
       (.getInstanceNumber rd))))
 
 (defn send-requests-from-file [file-path remote-device-id]
-  (with-local-device [ld (new-local-device {:port 47808})]
+  (with-local-device [ld (new-local-device :port 47808)]
     (let [requests (create-io-requests-from-file file-path)]
       (try (send-requests ld remote-device-id requests)
            (catch Exception e (str "Error: IOs already exist, bad address?"))))))
