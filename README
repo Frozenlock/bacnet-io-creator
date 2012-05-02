@@ -1,10 +1,13 @@
 # bacnet-io-creator
 
-FIXME: write description
+Input/output creator for BACnet devices. An IP/BACnet device must be present on your network
 
 ## Usage
 
-FIXME: write
+Load an Input/output .tsv file (tab separated values) of the following form:
+     IO-type IO-instance IO-name IO-description
+
+IO-type supports AI BI AO BO and EA EB SA SB
 
 ## License
 

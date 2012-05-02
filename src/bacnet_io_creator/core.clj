@@ -2,7 +2,8 @@
   (:gen-class :main true)
   (:use [seesaw.core]
         [seesaw.mig :only (mig-panel)]
-        [seesaw.chooser :only (choose-file)])
+        [seesaw.chooser :only (choose-file)]
+        [seesaw.swingx :only (hyperlink)])
   (:require [clojure-csv.core :as csv]))
 
 (import 'java.net.InetSocketAddress)
@@ -154,37 +155,37 @@ java method `terminate'."
   "Open a dialog window for the user. Return this map: {:devID
 foo, :file-object foo, :port foo}"
   (native!)
-  (let [b (button :text "Choose IO file")
-        create-b (button :text "Create!")
-        file-object (atom nil)
-        filename (text :editable? false)
-        stop-create-b
-        (listen create-b :action
-                (fn [e] (when-let [path (.getAbsolutePath @file-object)]
-                          (let [devID (Integer/parseInt (text (select (to-root e) [:#devID])))]
-                            (if-let [err (send-requests-from-file path devID)]
-                              (alert err)
-                              (alert "Done!"))))))
-        stop-b (listen b :action (fn [e] (let [file (choose-file :dir (get-current-directory))]
-                                           (text! filename (.getName file))
-                                           (reset! file-object file))))]
-    (->
-   (dialog :title "BACnet IO creator"
-           :content
-           (mig-panel
-            :constraints ["wrap 2"
-                          "[shrink 0]20px[200, grow, fill]"
-                          "[shrink 0]5px[]"]
-            :items [[b] [filename]
-                    ["Device ID"][(text :id :devID :text "10100")]
-                    ["Port (default 47808):"] [(text :id :port :text "47808")]
-                    [ :separator         "growx, wrap, span, gaptop 10"]
-                    [create-b "span"]])
-           :option-type :ok-cancel
-           :type :question
-           :success-fn (fn [p] (stop-b) (stop-create-b)))                         
-   (pack!)
-   (show!))))
+  (invoke-later
+   (let [b (button :text "Choose IO file")
+         file-object (atom nil)
+         filename (text :editable? false)
+         create-b (button :text "Create!")
+         hyperlink-source (hyperlink :uri "https://github.com/Frozenlock/bacnet-io-creator" :text "Source")
+         stop-create-b
+         (listen create-b :action
+                 (fn [e] (when-let [path (.getAbsolutePath @file-object)]
+                           (let [devID (Integer/parseInt (text (select (to-root e) [:#devID])))]
+                             (if-let [err (send-requests-from-file path devID)]
+                               (alert err)
+                               (alert "Done!"))))))
+         stop-b (listen b :action (fn [e] (let [file (choose-file :dir (get-current-directory))]
+                                            (text! filename (.getName file))
+                                            (reset! file-object file))))]
+     (->
+      (frame :title "BACnet IO creator"
+             :content
+             (mig-panel
+              :constraints ["wrap 2"
+                            "[shrink 0]20px[200, grow, fill]"
+                            "[shrink 0]5px[]"]
+              :items [[b "growx"] [filename]
+                      ["Device ID"][(text :id :devID :text "10100")]
+                      ["Remote port (default 47808):"] [(text :id :port :text "47808")]
+                      [ :separator         "growx, wrap, span, gaptop 10"]
+                      [create-b "growx"]
+                      [hyperlink-source]]))
+      (pack!)
+      (show!)))))
 
 
 (defn -main [& args]
