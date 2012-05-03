@@ -34,6 +34,8 @@
           type.constructed.Recipient
           type.constructed.SequenceOf
           type.constructed.WriteAccessSpecification
+          type.constructed.DeviceObjectPropertyReference
+          type.enumerated.LoggingType
           type.enumerated.EngineeringUnits
           type.enumerated.ObjectType
           type.enumerated.PropertyIdentifier
@@ -122,10 +124,44 @@ java method `terminate'."
                                      additionnal-properties]))))))
 
 
+(defn create-tl-request
+  "Create a create-trend-log-request to a remote BACnet device"
+  [io-type io-instance io-name io-description]
+  (let [type (filter-type io-type)
+        oid (ObjectIdentifier. ObjectType/trendLog
+                               (+ (* (.intValue type) 1000) (Integer/parseInt io-instance)))
+        log-interval (if (some #(= % type) [ObjectType/binaryOutput ObjectType/binaryInput])
+                       (UnsignedInteger. 0)
+                       (UnsignedInteger. 30000))]
+    (CreateObjectRequest. oid
+                          (SequenceOf.
+                           (ArrayList.
+                            (remove #(= nil %)
+                                    [(PropertyValue.
+                                      PropertyIdentifier/objectName
+                                      (CharacterString. (clojure.string/join ["TL_" io-name])))
+                                     (PropertyValue.
+                                      PropertyIdentifier/logInterval
+                                      log-interval)
+                                     (PropertyValue.
+                                      PropertyIdentifier/bufferSize
+                                      (UnsignedInteger. 576))
+                                     (PropertyValue.
+                                      PropertyIdentifier/logDeviceObjectProperty
+                                      (DeviceObjectPropertyReference.
+                                       (ObjectIdentifier. type (Integer/parseInt io-instance))
+                                       PropertyIdentifier/presentValue nil nil))]))))))
+  
+
 (defn create-io-requests-from-file [file-path]
   (let [file (slurp file-path)]
     (for [io-info (csv/parse-csv file :delimiter \tab)]
       (apply create-io-request io-info))))
+
+(defn create-tl-requests-from-file [file-path]
+  (let [file (slurp file-path)]
+    (for [io-info (csv/parse-csv file :delimiter \tab)]
+      (apply create-tl-request io-info))))
 
 
 (defn send-requests
@@ -136,16 +172,21 @@ java method `terminate'."
     (doseq [rq requests]
       (.send local-device rd rq))))
 
+(defn create-delete-object-requests [oids]
+  (for [oid oids]
+    (DeleteObjectRequest. oid)))
+
 (defn get-remote-devices-list []
-  (with-local-device [ld (new-local-device {})]
+  (with-local-device [ld (new-local-device)]
     (.sendBroadcast ld (WhoIsRequest.))
     (Thread/sleep 500)
     (for [rd (.getRemoteDevices ld)]
       (.getInstanceNumber rd))))
 
-(defn send-requests-from-file [file-path remote-device-id]
-  (with-local-device [ld (new-local-device :port 47808)]
-    (let [requests (create-io-requests-from-file file-path)]
+(defn send-requests-from-file [file-path remote-device-id port]
+  (with-local-device [ld (new-local-device :port port)]
+    (let [requests (concat (create-io-requests-from-file file-path)
+                           (create-tl-requests-from-file file-path))]
       (try (send-requests ld remote-device-id requests)
            (catch Exception e (str "Error: IOs already exist, bad address?"))))))
 
@@ -164,8 +205,9 @@ foo, :file-object foo, :port foo}"
          stop-create-b
          (listen create-b :action
                  (fn [e] (when-let [path (.getAbsolutePath @file-object)]
-                           (let [devID (Integer/parseInt (text (select (to-root e) [:#devID])))]
-                             (if-let [err (send-requests-from-file path devID)]
+                           (let [devID (Integer/parseInt (text (select (to-root e) [:#devID])))
+                                 port (Integer/parseInt (text (select (to-root e) [:#port])))]
+                             (if-let [err (send-requests-from-file path devID port)]
                                (alert err)
                                (alert "Done!"))))))
          stop-b (listen b :action (fn [e] (let [file (choose-file :dir (get-current-directory))]
@@ -173,6 +215,7 @@ foo, :file-object foo, :port foo}"
                                             (reset! file-object file))))]
      (->
       (frame :title "BACnet IO creator"
+             :on-close :exit
              :content
              (mig-panel
               :constraints ["wrap 2"

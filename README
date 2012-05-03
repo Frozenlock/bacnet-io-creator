@@ -9,6 +9,8 @@ Load an Input/output .tsv file (tab separated values) of the following form:
 
 IO-type supports AI BI AO BO and EA EB SA SB
 
+Trendlogs will also be created for every IO. If any of those objects already exists, throw an error.
+
 ## License
 
 Copyright (C) 2012 Christian Fortin
