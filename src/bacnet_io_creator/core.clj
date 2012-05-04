@@ -129,7 +129,7 @@ java method `terminate'."
   [io-type io-instance io-name io-description]
   (let [type (filter-type io-type)
         oid (ObjectIdentifier. ObjectType/trendLog
-                               (+ (* (.intValue type) 1000) (Integer/parseInt io-instance)))
+                               (+ (* (+ 1 (.intValue type)) 1000) (Integer/parseInt io-instance)))
         log-interval (if (some #(= % type) [ObjectType/binaryOutput ObjectType/binaryInput])
                        (UnsignedInteger. 0)
                        (UnsignedInteger. 30000))]
@@ -144,15 +144,20 @@ java method `terminate'."
                                       PropertyIdentifier/logInterval
                                       log-interval)
                                      (PropertyValue.
+                                      PropertyIdentifier/enable
+                                      (com.serotonin.bacnet4j.type.primitive.Boolean. false))
+                                     (PropertyValue.
                                       PropertyIdentifier/bufferSize
                                       (UnsignedInteger. 576))
+                                     (PropertyValue.
+                                      PropertyIdentifier/enable
+                                      (com.serotonin.bacnet4j.type.primitive.Boolean. true))
                                      (PropertyValue.
                                       PropertyIdentifier/logDeviceObjectProperty
                                       (DeviceObjectPropertyReference.
                                        (ObjectIdentifier. type (Integer/parseInt io-instance))
                                        PropertyIdentifier/presentValue nil nil))]))))))
   
-
 (defn create-io-requests-from-file [file-path]
   (let [file (slurp file-path)]
     (for [io-info (csv/parse-csv file :delimiter \tab)]
